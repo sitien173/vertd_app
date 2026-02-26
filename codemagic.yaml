@@ -1,0 +1,72 @@
+workflows:
+  ios-native-workflow:
+    name: iOS Native Workflow
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: master
+          include: true
+          source: true
+
+    integrations:
+      app_store_connect: codemagic
+
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.sitien173.vertd
+      vars:
+        XCODE_PROJECT: "vertd.xcodeproj"
+        XCODE_SCHEME: "vertd"
+        BUNDLE_ID: "com.sitien173.vertd"
+        APP_STORE_APPLE_ID: 0000000000
+
+    scripts:
+      - name: Validate Xcode project file
+        script: |
+          if grep -q "Placeholder project file scaffold" "$CM_BUILD_DIR/$XCODE_PROJECT/project.pbxproj"; then
+            echo "The project.pbxproj file is still placeholder content."
+            echo "Open the project in Xcode on macOS and commit the real project file before running Codemagic builds."
+            exit 1
+          fi
+
+      - name: Configure code signing
+        script: |
+          xcode-project use-profiles
+
+      - name: Increment build number from App Store
+        script: |
+          if [ "$APP_STORE_APPLE_ID" = "0000000000" ]; then
+            echo "APP_STORE_APPLE_ID is placeholder; skipping build number increment."
+            exit 0
+          fi
+
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID")
+          agvtool new-version -all $(($LATEST_BUILD_NUMBER + 1))
+
+      - name: Build IPA for distribution
+        script: |
+          xcode-project build-ipa \
+            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+      email:
+        recipients:
+          - your-email@example.com
+        notify:
+          success: true
+          failure: true

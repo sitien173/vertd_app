@@ -1,0 +1,123 @@
+name: Build IPA
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+    inputs:
+      export_method:
+        description: Export method for IPA signing
+        required: true
+        default: app-store
+        type: choice
+        options:
+          - app-store
+          - ad-hoc
+          - development
+
+jobs:
+  build-ipa:
+    runs-on: macos-14
+    env:
+      PROJECT_PATH: vertd.xcodeproj
+      SCHEME: vertd
+      CONFIGURATION: Release
+      ARCHIVE_PATH: ${{ github.workspace }}/build/vertd.xcarchive
+      EXPORT_PATH: ${{ github.workspace }}/build/export
+      EXPORT_METHOD: ${{ inputs.export_method || 'app-store' }}
+      IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+      IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+      IOS_SIGNING_CERT: ${{ secrets.IOS_SIGNING_CERT }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate project file is not placeholder
+        run: |
+          if grep -q "Placeholder project file scaffold" "$PROJECT_PATH/project.pbxproj"; then
+            echo "::error::vertd.xcodeproj/project.pbxproj is a placeholder. Open in Xcode on macOS and commit a real project before CI builds can succeed."
+            exit 1
+          fi
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+
+      - name: Import signing certificate
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.IOS_CERT_P12_BASE64 }}
+          p12-password: ${{ secrets.IOS_CERT_PASSWORD }}
+
+      - name: Install provisioning profile
+        id: provisioning
+        run: |
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          echo "${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}" | base64 --decode > profile.mobileprovision
+          security cms -D -i profile.mobileprovision > profile.plist
+
+          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c 'Print :Name' profile.plist)
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' profile.plist)
+
+          cp profile.mobileprovision "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
+
+          echo "profile_name=$PROFILE_NAME" >> "$GITHUB_OUTPUT"
+          echo "profile_uuid=$PROFILE_UUID" >> "$GITHUB_OUTPUT"
+
+      - name: Create ExportOptions.plist
+        run: |
+          cat > ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>${EXPORT_METHOD}</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>teamID</key>
+            <string>${IOS_TEAM_ID}</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>${IOS_BUNDLE_ID}</key>
+              <string>${{ steps.provisioning.outputs.profile_name }}</string>
+            </dict>
+            <key>compileBitcode</key>
+            <false/>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Build archive
+        run: |
+          xcodebuild \
+            -project "$PROJECT_PATH" \
+            -scheme "$SCHEME" \
+            -configuration "$CONFIGURATION" \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$ARCHIVE_PATH" \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
+            PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
+            CODE_SIGN_IDENTITY="$IOS_SIGNING_CERT" \
+            PROVISIONING_PROFILE_SPECIFIER="${{ steps.provisioning.outputs.profile_name }}" \
+            clean archive
+
+      - name: Export IPA
+        run: |
+          mkdir -p "$EXPORT_PATH"
+          xcodebuild \
+            -exportArchive \
+            -archivePath "$ARCHIVE_PATH" \
+            -exportPath "$EXPORT_PATH" \
+            -exportOptionsPlist ExportOptions.plist
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vertd-ipa-${{ github.run_number }}
+          path: |
+            build/export/*.ipa
+            build/export/*.dSYM
+          if-no-files-found: error
