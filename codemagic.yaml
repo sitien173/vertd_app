@@ -63,12 +63,15 @@ workflows:
 
           security cms -D -i "$PROFILE_PATH" > profile.plist
           PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" profile.plist)
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" profile.plist)
           TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" profile.plist)
 
           echo "Resolved provisioning profile: $PROFILE_NAME"
+          echo "Resolved provisioning profile uuid: $PROFILE_UUID"
           echo "Resolved team id: $TEAM_ID"
 
           echo "PROFILE_NAME=$PROFILE_NAME" >> "$CM_ENV"
+          echo "PROFILE_UUID=$PROFILE_UUID" >> "$CM_ENV"
           echo "TEAM_ID=$TEAM_ID" >> "$CM_ENV"
 
       - name: Build IPA for distribution
@@ -78,6 +81,7 @@ workflows:
           PROJECT_PATH="${XCODE_PROJECT_PATH:-}"
           TEAM="${TEAM_ID:-}"
           PROFILE="${PROFILE_NAME:-}"
+          PROFILE_UUID="${PROFILE_UUID:-}"
           BUNDLE="${BUNDLE_ID:-}"
           SCHEME="${XCODE_SCHEME:-}"
 
@@ -94,10 +98,11 @@ workflows:
             find "$BUILD_ROOT" -maxdepth 4 -type d -name "*.xcodeproj"
             exit 1
           fi
-          if [ -z "$TEAM" ] || [ -z "$PROFILE" ] || [ -z "$BUNDLE" ] || [ -z "$SCHEME" ]; then
+          if [ -z "$TEAM" ] || [ -z "$PROFILE" ] || [ -z "$PROFILE_UUID" ] || [ -z "$BUNDLE" ] || [ -z "$SCHEME" ]; then
             echo "Missing signing variables:"
             echo "TEAM_ID='$TEAM'"
             echo "PROFILE_NAME='$PROFILE'"
+            echo "PROFILE_UUID='$PROFILE_UUID'"
             echo "BUNDLE_ID='$BUNDLE'"
             echo "XCODE_SCHEME='$SCHEME'"
             exit 1
@@ -143,7 +148,7 @@ workflows:
             --project "$PROJECT_PATH" \
             --scheme "$SCHEME" \
             --export-options-plist "$EXPORT_OPTIONS_PLIST" \
-            --archive-xcargs "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=$TEAM PRODUCT_BUNDLE_IDENTIFIER=$BUNDLE PROVISIONING_PROFILE_SPECIFIER=$PROFILE"
+            --archive-xcargs "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=$TEAM PRODUCT_BUNDLE_IDENTIFIER=$BUNDLE PROVISIONING_PROFILE_SPECIFIER=$PROFILE_UUID"
 
     artifacts:
       - build/ios/ipa/*.ipa
