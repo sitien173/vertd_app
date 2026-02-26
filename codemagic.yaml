@@ -14,8 +14,6 @@ workflows:
 
     environment:
       ios_signing:
-        distribution_type: ad_hoc
-        bundle_identifier: com.sitien173.vertd
         certificates:
           - daotqcert
         provisioning_profiles:
