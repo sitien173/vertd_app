@@ -55,7 +55,7 @@ struct UploadView: View {
             ) { result in
                 handleFileImport(result: result)
             }
-            .onChange(of: selectedPhoto) { _, newValue in
+            .onChange(of: selectedPhoto) { newValue in
                 guard let newValue else { return }
                 Task {
                     await uploadFromPhotoItem(newValue)

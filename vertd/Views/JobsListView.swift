@@ -11,11 +11,27 @@ struct JobsListView: View {
         NavigationStack {
             List {
                 if viewModel.jobs.isEmpty {
-                    ContentUnavailableView(
-                        "No Jobs Yet",
-                        systemImage: "tray",
-                        description: Text("Uploaded files will appear here.")
-                    )
+                    if #available(iOS 17.0, *) {
+                        ContentUnavailableView(
+                            "No Jobs Yet",
+                            systemImage: "tray",
+                            description: Text("Uploaded files will appear here.")
+                        )
+                    } else {
+                        VStack(spacing: 8) {
+                            Image(systemName: "tray")
+                                .font(.title2)
+                                .foregroundStyle(.secondary)
+                            Text("No Jobs Yet")
+                                .font(.headline)
+                            Text("Uploaded files will appear here.")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 24)
+                        .listRowBackground(Color.clear)
+                    }
                 } else {
                     ForEach(viewModel.jobs) { job in
                         NavigationLink {
