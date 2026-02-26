@@ -12,18 +12,14 @@ workflows:
           include: true
           source: true
 
-    integrations:
-      app_store_connect: codemagic
-
     environment:
       ios_signing:
-        distribution_type: app_store
+        distribution_type: ad_hoc
         bundle_identifier: com.sitien173.vertd
       vars:
         XCODE_PROJECT: "vertd.xcodeproj"
         XCODE_SCHEME: "vertd"
         BUNDLE_ID: "com.sitien173.vertd"
-        APP_STORE_APPLE_ID: 0000000000
 
     scripts:
       - name: Validate Xcode project file
@@ -38,16 +34,6 @@ workflows:
         script: |
           xcode-project use-profiles
 
-      - name: Increment build number from App Store
-        script: |
-          if [ "$APP_STORE_APPLE_ID" = "0000000000" ]; then
-            echo "APP_STORE_APPLE_ID is placeholder; skipping build number increment."
-            exit 0
-          fi
-
-          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID")
-          agvtool new-version -all $(($LATEST_BUILD_NUMBER + 1))
-
       - name: Build IPA for distribution
         script: |
           xcode-project build-ipa \
@@ -59,14 +45,3 @@ workflows:
       - /tmp/xcodebuild_logs/*.log
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
-
-    publishing:
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true
-      email:
-        recipients:
-          - your-email@example.com
-        notify:
-          success: true
-          failure: true

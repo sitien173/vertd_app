@@ -24,7 +24,7 @@ This repo includes a macOS CI workflow at `.github/workflows/build-ipa.yml` that
 ### Triggering builds
 
 - Automatic on pushes to `master`.
-- Manual from Actions tab with optional `export_method` (`app-store`, `ad-hoc`, `development`).
+- Manual from Actions tab with optional `export_method` (`ad-hoc` or `development`).
 
 ### Important
 
@@ -38,11 +38,10 @@ This repo also includes `codemagic.yaml` for Codemagic native iOS builds.
 ### Codemagic setup checklist
 
 - Add this repository in Codemagic and select the `ios-native-workflow`.
-- Configure the App Store Connect integration in Codemagic named `codemagic` (or update `integrations.app_store_connect` in `codemagic.yaml`).
-- Ensure bundle identifier and Apple Team settings match your real app target:
+- Upload signing assets in Codemagic (`Code signing identities` and `Provisioning profiles`) for the bundle ID.
+- Ensure bundle identifier and signing settings match your real app target:
   - `BUNDLE_ID`
   - `environment.ios_signing.bundle_identifier`
-  - `APP_STORE_APPLE_ID`
 - Keep `XCODE_PROJECT` and `XCODE_SCHEME` aligned with your real Xcode project.
 
 ### Important

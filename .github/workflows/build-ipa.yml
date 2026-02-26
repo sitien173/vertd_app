@@ -9,10 +9,9 @@ on:
       export_method:
         description: Export method for IPA signing
         required: true
-        default: app-store
+        default: ad-hoc
         type: choice
         options:
-          - app-store
           - ad-hoc
           - development
 
@@ -25,7 +24,7 @@ jobs:
       CONFIGURATION: Release
       ARCHIVE_PATH: ${{ github.workspace }}/build/vertd.xcarchive
       EXPORT_PATH: ${{ github.workspace }}/build/export
-      EXPORT_METHOD: ${{ inputs.export_method || 'app-store' }}
+      EXPORT_METHOD: ${{ inputs.export_method || 'ad-hoc' }}
       IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
       IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
       IOS_SIGNING_CERT: ${{ secrets.IOS_SIGNING_CERT }}
