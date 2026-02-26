@@ -37,6 +37,7 @@ workflows:
           BUILD_ROOT="$(cd "${CM_BUILD_DIR:-.}" && pwd)"
           PROJECT_ROOT="$BUILD_ROOT"
           PROJECT_SPEC="$PROJECT_ROOT/project.yml"
+          PROJECT_FILE="$(printf '%s' "${XCODE_PROJECT:-$XCODE_PROJECT_NAME.xcodeproj}" | tr -d '\r')"
 
           if [ ! -f "$PROJECT_SPEC" ]; then
             DETECTED_SPEC="$(find "$BUILD_ROOT" -maxdepth 4 -type f -name "project.yml" | head -n 1)"
@@ -48,7 +49,7 @@ workflows:
             PROJECT_ROOT="$(dirname "$PROJECT_SPEC")"
           fi
 
-          rm -rf "$PROJECT_ROOT/$XCODE_PROJECT"
+          rm -rf "$PROJECT_ROOT/$PROJECT_FILE"
           rm -rf "$PROJECT_ROOT/$XCODE_PROJECT_NAME.xcodeproj"
 
           cd "$PROJECT_ROOT"
@@ -56,9 +57,9 @@ workflows:
             --spec "$PROJECT_SPEC" \
             --project "$XCODE_PROJECT_NAME"
 
-          PROJECT_PATH="$PROJECT_ROOT/$XCODE_PROJECT"
-          if [ ! -d "$PROJECT_PATH" ]; then
-            echo "Generated project '$XCODE_PROJECT' was not found."
+          PROJECT_PATH="$(find "$PROJECT_ROOT" -maxdepth 2 -type d -name "$PROJECT_FILE" | head -n 1)"
+          if [ -z "$PROJECT_PATH" ] || [ ! -e "$PROJECT_PATH" ]; then
+            echo "Generated project '$PROJECT_FILE' was not found."
             echo "Available xcodeproj directories:"
             find "$BUILD_ROOT" -maxdepth 5 -type d -name "*.xcodeproj"
             exit 1
@@ -95,7 +96,7 @@ workflows:
           set -euo pipefail
           BUILD_ROOT="$(cd "${CM_BUILD_DIR:-.}" && pwd)"
           ROOT_DIR="${PROJECT_ROOT:-$BUILD_ROOT}"
-          XCODE_PROJECT_FILE="${XCODE_PROJECT:-$XCODE_PROJECT_NAME.xcodeproj}"
+          XCODE_PROJECT_FILE="$(printf '%s' "${XCODE_PROJECT:-$XCODE_PROJECT_NAME.xcodeproj}" | tr -d '\r')"
           PROJECT_PATH="${XCODE_PROJECT_PATH:-}"
           TEAM="${TEAM_ID:-}"
           PROFILE="${PROFILE_NAME:-}"
@@ -108,7 +109,7 @@ workflows:
             echo "Resolved XCODE_PROJECT_PATH from defaults: $PROJECT_PATH"
           fi
 
-          if [ -z "$PROJECT_PATH" ] || [ ! -d "$PROJECT_PATH" ]; then
+          if [ -z "$PROJECT_PATH" ] || [ ! -e "$PROJECT_PATH" ]; then
             echo "Invalid XCODE_PROJECT_PATH: '$PROJECT_PATH'"
             find "$BUILD_ROOT" -maxdepth 5 -type d -name "*.xcodeproj"
             exit 1
