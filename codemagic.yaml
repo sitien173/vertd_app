@@ -75,17 +75,23 @@ workflows:
         script: |
           set -euo pipefail
           BUILD_ROOT="$(cd "${CM_BUILD_DIR:-.}" && pwd)"
+          PROJECT_PATH="${XCODE_PROJECT_PATH:-}"
+          TEAM="${TEAM_ID:-}"
+          PROFILE="${PROFILE_NAME:-}"
+          BUNDLE="${BUNDLE_ID:-}"
+          SCHEME="${XCODE_SCHEME:-}"
 
-          if [ -z "$XCODE_PROJECT_PATH" ] || [ ! -d "$XCODE_PROJECT_PATH" ]; then
-            echo "Invalid XCODE_PROJECT_PATH: '$XCODE_PROJECT_PATH'"
+          if [ -z "$PROJECT_PATH" ] || [ ! -d "$PROJECT_PATH" ]; then
+            echo "Invalid XCODE_PROJECT_PATH: '$PROJECT_PATH'"
             find "$BUILD_ROOT" -maxdepth 4 -type d -name "*.xcodeproj"
             exit 1
           fi
-          if [ -z "$TEAM_ID" ] || [ -z "$PROFILE_NAME" ] || [ -z "$BUNDLE_ID" ]; then
+          if [ -z "$TEAM" ] || [ -z "$PROFILE" ] || [ -z "$BUNDLE" ] || [ -z "$SCHEME" ]; then
             echo "Missing signing variables:"
-            echo "TEAM_ID='$TEAM_ID'"
-            echo "PROFILE_NAME='$PROFILE_NAME'"
-            echo "BUNDLE_ID='$BUNDLE_ID'"
+            echo "TEAM_ID='$TEAM'"
+            echo "PROFILE_NAME='$PROFILE'"
+            echo "BUNDLE_ID='$BUNDLE'"
+            echo "XCODE_SCHEME='$SCHEME'"
             exit 1
           fi
 
@@ -100,11 +106,11 @@ workflows:
             <key>signingStyle</key>
             <string>manual</string>
             <key>teamID</key>
-            <string>$TEAM_ID</string>
+            <string>$TEAM</string>
             <key>provisioningProfiles</key>
             <dict>
-              <key>$BUNDLE_ID</key>
-              <string>$PROFILE_NAME</string>
+              <key>$BUNDLE</key>
+              <string>$PROFILE</string>
             </dict>
             <key>compileBitcode</key>
             <false/>
@@ -121,15 +127,15 @@ workflows:
             exit 1
           fi
 
-          echo "Using project: $XCODE_PROJECT_PATH"
+          echo "Using project: $PROJECT_PATH"
           echo "Using export options plist: $EXPORT_OPTIONS_PLIST"
           ls -la "$EXPORT_OPTIONS_PLIST"
 
           xcode-project build-ipa \
-            --project "$XCODE_PROJECT_PATH" \
-            --scheme "$XCODE_SCHEME" \
+            --project "$PROJECT_PATH" \
+            --scheme "$SCHEME" \
             --export-options-plist "$EXPORT_OPTIONS_PLIST" \
-            --archive-xcargs "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=$TEAM_ID PRODUCT_BUNDLE_IDENTIFIER=$BUNDLE_ID PROVISIONING_PROFILE_SPECIFIER=$PROFILE_NAME"
+            --archive-xcargs "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=$TEAM PRODUCT_BUNDLE_IDENTIFIER=$BUNDLE PROVISIONING_PROFILE_SPECIFIER=$PROFILE"
 
     artifacts:
       - build/ios/ipa/*.ipa
