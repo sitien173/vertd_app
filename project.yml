@@ -2,7 +2,7 @@ name: vertd
 
 options:
   deploymentTarget:
-    iOS: "17.0"
+    iOS: "16.3"
 
 settings:
   base:
