@@ -156,15 +156,27 @@ workflows:
             exit 1
           fi
 
+          PROJECT_DIR="$(dirname "$PROJECT_PATH")"
+          if [ -f "$PROJECT_DIR/vertd/Info.plist" ]; then
+            INFO_PLIST_FILE="vertd/Info.plist"
+          elif [ -f "$PROJECT_DIR/Info.plist" ]; then
+            INFO_PLIST_FILE="Info.plist"
+          else
+            echo "Unable to locate Info.plist under $PROJECT_DIR"
+            find "$PROJECT_DIR" -maxdepth 4 -name "Info.plist" -print
+            exit 1
+          fi
+
           echo "Using project: $PROJECT_PATH"
           echo "Using export options plist: $EXPORT_OPTIONS_PLIST"
+          echo "Using INFOPLIST_FILE: $INFO_PLIST_FILE"
           ls -la "$EXPORT_OPTIONS_PLIST"
 
           xcode-project build-ipa \
             --project "$PROJECT_PATH" \
             --scheme "$SCHEME" \
             --export-options-plist "$EXPORT_OPTIONS_PLIST" \
-            --archive-xcargs "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=$TEAM PRODUCT_BUNDLE_IDENTIFIER=$BUNDLE PROVISIONING_PROFILE_SPECIFIER=$PROFILE_UUID"
+            --archive-xcargs "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=$TEAM PRODUCT_BUNDLE_IDENTIFIER=$BUNDLE PROVISIONING_PROFILE_SPECIFIER=$PROFILE_UUID INFOPLIST_FILE=$INFO_PLIST_FILE"
 
     artifacts:
       - build/ios/ipa/*.ipa
