@@ -35,9 +35,23 @@ workflows:
       - name: Generate Xcode project
         script: |
           rm -rf "$CM_BUILD_DIR/$XCODE_PROJECT"
+          rm -rf "$CM_BUILD_DIR/$XCODE_PROJECT_NAME.xcodeproj"
+
+          cd "$CM_BUILD_DIR"
           xcodegen generate \
-            --spec "$CM_BUILD_DIR/project.yml" \
-            --project "$CM_BUILD_DIR/$XCODE_PROJECT_NAME"
+            --spec "project.yml" \
+            --project "$XCODE_PROJECT_NAME"
+
+          PROJECT_PATH=$(find "$CM_BUILD_DIR" -maxdepth 3 -type d -name "$XCODE_PROJECT" | head -n 1)
+          if [ -z "$PROJECT_PATH" ]; then
+            echo "Generated project '$XCODE_PROJECT' was not found."
+            echo "Available xcodeproj directories:"
+            find "$CM_BUILD_DIR" -maxdepth 4 -type d -name "*.xcodeproj"
+            exit 1
+          fi
+
+          echo "Resolved Xcode project path: $PROJECT_PATH"
+          echo "export XCODE_PROJECT_PATH=$PROJECT_PATH" >> "$CM_ENV"
 
       - name: Resolve signing values from provisioning profile
         script: |
@@ -60,7 +74,7 @@ workflows:
       - name: Build IPA for distribution
         script: |
           xcode-project build-ipa \
-            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
+            --project "$XCODE_PROJECT_PATH" \
             --scheme "$XCODE_SCHEME" \
             --archive-xcargs "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=$TEAM_ID PRODUCT_BUNDLE_IDENTIFIER=$BUNDLE_ID PROVISIONING_PROFILE_SPECIFIER=$PROFILE_NAME"
 
