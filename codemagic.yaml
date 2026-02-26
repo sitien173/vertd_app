@@ -71,11 +71,40 @@ workflows:
           echo "export PROFILE_NAME=$PROFILE_NAME" >> "$CM_ENV"
           echo "export TEAM_ID=$TEAM_ID" >> "$CM_ENV"
 
+      - name: Create export options plist
+        script: |
+          EXPORT_OPTIONS_PLIST="$HOME/export_options.plist"
+          cat > "$EXPORT_OPTIONS_PLIST" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>ad-hoc</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>teamID</key>
+            <string>$TEAM_ID</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>$BUNDLE_ID</key>
+              <string>$PROFILE_NAME</string>
+            </dict>
+            <key>compileBitcode</key>
+            <false/>
+          </dict>
+          </plist>
+          EOF
+
+          echo "Created export options plist at $EXPORT_OPTIONS_PLIST"
+          echo "export EXPORT_OPTIONS_PLIST=$EXPORT_OPTIONS_PLIST" >> "$CM_ENV"
+
       - name: Build IPA for distribution
         script: |
           xcode-project build-ipa \
             --project "$XCODE_PROJECT_PATH" \
             --scheme "$XCODE_SCHEME" \
+            --export-options-plist "$EXPORT_OPTIONS_PLIST" \
             --archive-xcargs "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=$TEAM_ID PRODUCT_BUNDLE_IDENTIFIER=$BUNDLE_ID PROVISIONING_PROFILE_SPECIFIER=$PROFILE_NAME"
 
     artifacts:
