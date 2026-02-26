@@ -41,6 +41,8 @@ This repo also includes `codemagic.yaml` for Codemagic native iOS builds.
   - `BUNDLE_ID`
 - Keep `XCODE_PROJECT` and `XCODE_SCHEME` aligned with your real Xcode project.
 - Keep `project.yml` updated when app targets/files/settings change.
+- Codemagic build resolves `TEAM_ID` and `PROFILE_NAME` from the installed `.mobileprovision` and passes them via `--archive-xcargs`.
+- CI deletes and regenerates `vertd.xcodeproj` on each run to avoid stale placeholder project metadata.
 
 ### Important
 

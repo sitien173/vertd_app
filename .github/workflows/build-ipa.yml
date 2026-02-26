@@ -43,6 +43,7 @@ jobs:
 
       - name: Generate Xcode project
         run: |
+          rm -rf "$PROJECT_PATH"
           xcodegen generate --spec "$PROJECT_SPEC" --project "$PROJECT_PATH"
 
       - name: Select Xcode
@@ -68,6 +69,17 @@ jobs:
 
           echo "profile_name=$PROFILE_NAME" >> "$GITHUB_OUTPUT"
           echo "profile_uuid=$PROFILE_UUID" >> "$GITHUB_OUTPUT"
+
+      - name: Validate signing secrets
+        run: |
+          if [ -z "$IOS_TEAM_ID" ]; then
+            echo "::error::Missing IOS_TEAM_ID secret."
+            exit 1
+          fi
+          if [ -z "$IOS_SIGNING_CERT" ]; then
+            echo "::error::Missing IOS_SIGNING_CERT secret (example: Apple Distribution)."
+            exit 1
+          fi
 
       - name: Create ExportOptions.plist
         run: |
