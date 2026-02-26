@@ -20,7 +20,7 @@ targets:
       path: vertd/Info.plist
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.sitien173.vertd
+        PRODUCT_BUNDLE_IDENTIFIER: vn.gbsofit.charger
         CODE_SIGN_STYLE: Manual
 
   vertdTests:
@@ -32,4 +32,4 @@ targets:
       - target: vertd
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.sitien173.vertdTests
+        PRODUCT_BUNDLE_IDENTIFIER: vn.gbsofit.chargerTests

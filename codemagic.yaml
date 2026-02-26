@@ -19,9 +19,10 @@ workflows:
         provisioning_profiles:
           - daotqmobileprovision
       vars:
+        XCODE_PROJECT_NAME: "vertd"
         XCODE_PROJECT: "vertd.xcodeproj"
         XCODE_SCHEME: "vertd"
-        BUNDLE_ID: "com.sitien173.vertd"
+        BUNDLE_ID: "vn.gbsofit.charger"
 
     scripts:
       - name: Install XcodeGen
@@ -36,7 +37,7 @@ workflows:
           rm -rf "$CM_BUILD_DIR/$XCODE_PROJECT"
           xcodegen generate \
             --spec "$CM_BUILD_DIR/project.yml" \
-            --project "$CM_BUILD_DIR/$XCODE_PROJECT"
+            --project "$CM_BUILD_DIR/$XCODE_PROJECT_NAME"
 
       - name: Resolve signing values from provisioning profile
         script: |
