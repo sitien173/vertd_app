@@ -5,8 +5,7 @@ This directory contains the SwiftUI source scaffold for tasks 7-13.
 ## Notes
 - Source files live under `vertd/`.
 - Unit tests live under `vertdTests/`.
-- `vertd.xcodeproj` currently contains a placeholder `project.pbxproj` in this CLI environment.
-  Open this folder on macOS/Xcode and create the app + test targets that include these files.
+- CI generates `vertd.xcodeproj` from `project.yml` using XcodeGen before building.
 
 ## GitHub Actions IPA Build
 
@@ -28,8 +27,7 @@ This repo includes a macOS CI workflow at `.github/workflows/build-ipa.yml` that
 
 ### Important
 
-The workflow intentionally fails if `vertd.xcodeproj/project.pbxproj` is still the placeholder file.
-Commit a real Xcode project file first, then CI can produce signed IPAs.
+The workflow generates the Xcode project from `project.yml` at build time.
 
 ## Codemagic IPA Build
 
@@ -41,9 +39,9 @@ This repo also includes `codemagic.yaml` for Codemagic native iOS builds.
 - Upload signing assets in Codemagic (`Code signing identities` and `Provisioning profiles`) for the bundle ID.
 - Ensure bundle identifier and signing settings match your real app target:
   - `BUNDLE_ID`
-  - `environment.ios_signing.bundle_identifier`
 - Keep `XCODE_PROJECT` and `XCODE_SCHEME` aligned with your real Xcode project.
+- Keep `project.yml` updated when app targets/files/settings change.
 
 ### Important
 
-As with GitHub Actions, Codemagic build will fail until `vertd.xcodeproj/project.pbxproj` is replaced with a real Xcode project file.
+Codemagic also generates the Xcode project from `project.yml` before signing/building.

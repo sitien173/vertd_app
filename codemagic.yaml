@@ -24,13 +24,18 @@ workflows:
         BUNDLE_ID: "com.sitien173.vertd"
 
     scripts:
-      - name: Validate Xcode project file
+      - name: Install XcodeGen
         script: |
-          if grep -q "Placeholder project file scaffold" "$CM_BUILD_DIR/$XCODE_PROJECT/project.pbxproj"; then
-            echo "The project.pbxproj file is still placeholder content."
-            echo "Open the project in Xcode on macOS and commit the real project file before running Codemagic builds."
-            exit 1
+          if ! command -v xcodegen >/dev/null 2>&1; then
+            brew update
+            brew install xcodegen
           fi
+
+      - name: Generate Xcode project
+        script: |
+          xcodegen generate \
+            --spec "$CM_BUILD_DIR/project.yml" \
+            --project "$CM_BUILD_DIR/$XCODE_PROJECT"
 
       - name: Configure code signing
         script: |

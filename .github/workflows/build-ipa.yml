@@ -19,6 +19,7 @@ jobs:
   build-ipa:
     runs-on: macos-14
     env:
+      PROJECT_SPEC: project.yml
       PROJECT_PATH: vertd.xcodeproj
       SCHEME: vertd
       CONFIGURATION: Release
@@ -33,12 +34,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate project file is not placeholder
+      - name: Install XcodeGen
         run: |
-          if grep -q "Placeholder project file scaffold" "$PROJECT_PATH/project.pbxproj"; then
-            echo "::error::vertd.xcodeproj/project.pbxproj is a placeholder. Open in Xcode on macOS and commit a real project before CI builds can succeed."
-            exit 1
+          if ! command -v xcodegen >/dev/null 2>&1; then
+            brew update
+            brew install xcodegen
           fi
+
+      - name: Generate Xcode project
+        run: |
+          xcodegen generate --spec "$PROJECT_SPEC" --project "$PROJECT_PATH"
 
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
