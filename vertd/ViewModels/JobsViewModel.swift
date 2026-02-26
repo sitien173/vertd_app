@@ -13,8 +13,12 @@ final class JobsViewModel: ObservableObject {
     private var apiClient: ApiClient?
     private var currentContext: Context?
 
-    init(webSocketClient: WebSocketClient = WebSocketClient()) {
+    init(webSocketClient: WebSocketClient) {
         self.webSocketClient = webSocketClient
+    }
+
+    init() {
+        self.webSocketClient = WebSocketClient()
     }
 
     func start(serverURLString: String, apiKey: String) {

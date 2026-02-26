@@ -46,12 +46,15 @@ enum APIJSON {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .custom { date, encoder in
             var container = encoder.singleValueContainer()
-            try container.encode(DateParsers.fractional.string(from: date))
+            try container.encode(DateParsers.fractionalString(from: date))
         }
         return encoder
     }
 
     private enum DateParsers {
+        static func fractionalString(from date: Date) -> String {
+            fractional.string(from: date)
+        }
         static let all: [(String) -> Date?] = [
             { fractional.date(from: $0) },
             { standard.date(from: $0) },

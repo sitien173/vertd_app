@@ -155,7 +155,7 @@ struct JobDetailView: View {
 
         do {
             let url = try await client.getDownloadUrl(id: jobID)
-            _ = openURL(url)
+            openURL(url)
             errorMessage = nil
         } catch {
             errorMessage = error.localizedDescription
